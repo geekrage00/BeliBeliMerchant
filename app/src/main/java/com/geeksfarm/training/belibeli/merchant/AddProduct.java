@@ -32,6 +32,8 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.geeksfarm.training.belibeli.merchant.adapter.CategoriesAdapter;
 import com.geeksfarm.training.belibeli.merchant.model.Category;
+import com.geeksfarm.training.belibeli.merchant.model.ProductErrorResponse;
+import com.geeksfarm.training.belibeli.merchant.utils.TokenManager;
 import com.google.gson.Gson;
 
 import org.json.JSONArray;
@@ -62,6 +64,8 @@ public class AddProduct extends AppCompatActivity implements AdapterView.OnItemS
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_product);
+
+
         // Volley Queue Instance
         requestQueue = Volley.newRequestQueue(getApplicationContext());
 
@@ -108,7 +112,7 @@ public class AddProduct extends AppCompatActivity implements AdapterView.OnItemS
                     productDesc = editProductDesc.getText().toString();
                     productPrice = editProductPrice.getText().toString();
                     productQty = editProductQty.getText().toString();
-                    merchantId = "1"; //Sementara set ke 1
+
 
                 //check String productImage ( sudah pilih gambar dari gallery atau belum)
                 if(productImage == null){ // jika kosong,
@@ -230,15 +234,43 @@ public class AddProduct extends AppCompatActivity implements AdapterView.OnItemS
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        Log.d("response :", response);
-                        try {
-                            JSONObject jsonObject = new JSONObject(response);
-                            Log.i("response :", response);
+                        System.out.println(response);
 
-                        } catch (JSONException ex) {
-                            ex.printStackTrace();
+                        try {
+                            JSONObject res = new JSONObject(response);
+                            int statuscode = res.getInt("code");
+                            if(statuscode == 200){
+                                Toast.makeText(getApplicationContext(),res.getString("message"),Toast.LENGTH_LONG).show();
+                            }
+                            else{
+                                ProductErrorResponse errorResponse = new Gson().fromJson(res.getJSONObject("message").toString(), ProductErrorResponse.class);
+
+                                if(errorResponse.getProductNameError().size() > 0){ //jika ada validasi untuk product Name
+                                    if(errorResponse.getProductNameError().get(0) != null){
+                                        editProductName.setError(errorResponse.getProductNameError().get(0));
+                                        Toast.makeText(getApplicationContext(),errorResponse.getProductNameError().get(0),Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+
+                                if(errorResponse.getProductQtyError().size() > 0){ //jika ada validasi untuk product Qty
+                                    if(errorResponse.getProductQtyError().get(0) != null){
+                                        editProductQty.setError(errorResponse.getProductQtyError().get(0));
+                                        Toast.makeText(getApplicationContext(),errorResponse.getProductPriceError().get(0),Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+
+                                if(errorResponse.getProductPriceError().size() > 0){ //jika ada validasi untuk product Price
+                                    if(errorResponse.getProductPriceError().get(0) != null){
+                                        editProductPrice.setError(errorResponse.getProductPriceError().get(0));
+                                        Toast.makeText(getApplicationContext(),errorResponse.getProductPriceError().get(0),Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+
+                            }
+                        }catch (JSONException e){
+                            e.printStackTrace();
                         }
-                        Toast.makeText(getApplicationContext(), "Success Added product",Toast.LENGTH_LONG).show();
+
                     }
                 },
                 new Response.ErrorListener() {
@@ -257,18 +289,26 @@ public class AddProduct extends AppCompatActivity implements AdapterView.OnItemS
                 params.put("productName", productName);
                 params.put("productDesc", productDesc);
                 params.put("productQty", productQty);
-                params.put("productImage", productImage);
+                if(productImage != null) {
+                    params.put("productImage", productImage);
+                }
                 params.put("productPrice", productPrice);
                 params.put("categoryId", categoryId);
                 params.put("merchantId", merchantId);
                 return params;
+            }
+
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String,String> headers = new Hashtable<>();
+                headers.put("Content-Type","application/x-www-form-urlencoded");
+                return headers;
             }
         };
         {
             int socketTimeout = 30000;
             RetryPolicy policy = new DefaultRetryPolicy(socketTimeout, DefaultRetryPolicy.DEFAULT_MAX_RETRIES, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT);
             stringRequest.setRetryPolicy(policy);
-            RequestQueue requestQueue = Volley.newRequestQueue(this);
             requestQueue.add(stringRequest);
         }
     }
