@@ -15,10 +15,12 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.geeksfarm.training.belibeli.merchant.model.AccessToken;
 import com.geeksfarm.training.belibeli.merchant.model.RegisterErrorResponse;
+import com.geeksfarm.training.belibeli.merchant.network.VolleyService;
 import com.geeksfarm.training.belibeli.merchant.utils.TokenManager;
 import com.google.gson.Gson;
 
@@ -43,7 +45,6 @@ public class RegisterActivity extends AppCompatActivity {;
     @BindView(R.id.text_edit_merchant_name) EditText editTextMerchantName;
     @BindView(R.id.checkbox_as_merchant) CheckBox checkBoxAsMerchant;
 
-    RequestQueue requestQueue;
     AccessToken accessToken;
 
     final String FIRST_NAME = "first_name";
@@ -63,8 +64,6 @@ public class RegisterActivity extends AppCompatActivity {;
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
         ButterKnife.bind(this);
-
-        requestQueue = Volley.newRequestQueue(this);
     }
 
     @OnClick(R.id.tv_login)
@@ -120,7 +119,9 @@ public class RegisterActivity extends AppCompatActivity {;
                         try {
                             body = new String(error.networkResponse.data, "UTF-8");
                             JSONObject res = new JSONObject(body);
+
                             RegisterErrorResponse errorResponse = new Gson().fromJson(res.getJSONObject("error").toString(),RegisterErrorResponse.class);
+
                             if(errorResponse.getEmailError().size() > 0){
                                 if(errorResponse.getEmailError().get(0) != null){
                                     editTextEmail.setError(errorResponse.getEmailError().get(0));
@@ -160,7 +161,9 @@ public class RegisterActivity extends AppCompatActivity {;
                 return params;
             }
         };
-        requestQueue.add(registerReq);
+
+        VolleyService.getInstance(getApplicationContext()).addToRequestQueue(registerReq);
+
     }
 
 

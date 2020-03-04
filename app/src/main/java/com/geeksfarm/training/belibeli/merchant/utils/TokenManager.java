@@ -39,9 +39,9 @@ public class TokenManager {
 
     public AccessToken getToken(){
         AccessToken accessToken = new AccessToken();
-        accessToken.setAccessToken(sharedPreferences.getString("TOKEN_TYPE",null));
+        accessToken.setTokenType(sharedPreferences.getString("TOKEN_TYPE",null));
         accessToken.setAccessToken(sharedPreferences.getString("ACCESS_TOKEN",null));
-        accessToken.setAccessToken(sharedPreferences.getString("REFRESH_TOKEN",null));
+        accessToken.setRefreshToken(sharedPreferences.getString("REFRESH_TOKEN",null));
         return accessToken;
     }
 
